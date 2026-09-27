@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>GymFlow</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2300E5FF'/%3E%3Cstop offset='1' stop-color='%23FF6B35'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%230A0B0F'/%3E%3Cpath d='M20 5 10 17h6l-2 10 10-13h-6z' fill='url(%23g)'/%3E%3C/svg%3E">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0B0F; --bg-elevated:#12141A; --surface:rgba(255,255,255,.035); --surface-hover:rgba(255,255,255,.06);
+  --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.14);
+  --text:#F5F5F7; --text-secondary:#8B8D98; --text-tertiary:#5A5C66;
+  --accent:#00E5FF; --accent-glow:rgba(0,229,255,.4); --accent-secondary:#FF6B35;
+  --success:#4ADE80; --danger:#F87171; --gold:#FFD166;
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%; background:var(--bg); overscroll-behavior:none;}
+body{font-family:'Manrope',sans-serif; color:var(--text); font-weight:500; -webkit-font-smoothing:antialiased;}
+#app{position:relative; max-width:460px; margin:0 auto; height:100vh; overflow:hidden; display:flex; flex-direction:column;}
+.orb{position:fixed; width:400px; height:400px; border-radius:50%; filter:blur(90px); opacity:.08; pointer-events:none; z-index:0; animation:float 20s ease-in-out infinite;}
+.orb-cyan{background:var(--accent); top:-120px; right:-120px;}
+.orb-orange{background:var(--accent-secondary); bottom:-120px; left:-140px; animation-delay:-10s;}
+@keyframes float{0%,100%{transform:translate(0,0);}50%{transform:translate(-20px,25px);}}
+.screen{position:relative; z-index:1; flex:1; overflow-y:auto; scrollbar-width:none; padding:20px 16px 110px;}
+.screen::-webkit-scrollbar{display:none;}
+.hidden{display:none !important;}
+button{font-family:inherit; border:none; background:none; color:inherit; cursor:pointer;}
+button:active, .tappable:active{transform:scale(.97); transition:transform .15s;}
+input,textarea{font-family:inherit; color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; font-size:16px; width:100%; outline:none;}
+input:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:none; font-size:14px;}
+.icon{width:20px; height:20px; stroke:currentColor; stroke-width:1.8; fill:none; flex-shrink:0;}
+
+.card{background:var(--surface); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%); border:1px solid var(--border); border-radius:20px; padding:20px; margin-bottom:12px; opacity:0; animation:fadeInUp .5s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes fadeInUp{from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);}}
+.h1{font-size:26px; font-weight:800; letter-spacing:-0.6px;}
+.h2{font-size:16px; font-weight:700; letter-spacing:-0.3px; margin-bottom:14px;}
+.label{font-size:11px; font-weight:700; letter-spacing:1px; color:var(--text-secondary); text-transform:uppercase;}
+.stat-num{font-size:24px; font-weight:800; letter-spacing:-1px; font-variant-numeric:tabular-nums;}
+.sub{color:var(--text-secondary); font-size:14px; margin-top:4px;}
+
+.header{display:flex; align-items:center; gap:12px; margin-bottom:20px; opacity:0; animation:fadeInUp .5s cubic-bezier(.4,0,.2,1) forwards;}
+.logo-mark{width:38px; height:38px; border-radius:11px; background:var(--surface-hover); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.avatar{width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent-secondary)); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; color:#0A0B0F; flex-shrink:0; margin-left:auto;}
+
+.hero{position:relative; overflow:hidden; background:linear-gradient(135deg, rgba(0,229,255,.08), rgba(255,107,53,.04));}
+.hero::before{content:''; position:absolute; top:-60px; right:-60px; width:160px; height:160px; border-radius:50%; background:var(--accent); filter:blur(50px); opacity:.25;}
+.hero-title{font-size:24px; font-weight:800; margin:6px 0 16px; position:relative;}
+.btn-primary{background:var(--accent); color:#0A0B0F; font-weight:700; font-size:14px; padding:14px 22px; border-radius:999px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 0 24px var(--accent-glow); position:relative;}
+.btn-primary:disabled{opacity:.4; box-shadow:none;}
+.btn-secondary{background:var(--surface); border:1px solid var(--border-strong); color:var(--text); font-weight:700; font-size:14px; padding:14px 22px; border-radius:999px; display:inline-flex; align-items:center; gap:8px; justify-content:center;}
+.btn-ghost{background:none; color:var(--accent); font-weight:700; font-size:13px;}
+
+.grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.stat-card{position:relative;}
+.stat-icon{position:absolute; top:16px; right:16px; opacity:.35; width:18px; height:18px;}
+
+.ring-row{display:flex; align-items:center; gap:16px;}
+
+.ex-row{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border);}
+.ex-row:last-child{border-bottom:none;}
+.ex-icon{width:40px; height:40px; border-radius:12px; background:var(--surface-hover); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--accent);}
+.ex-icon svg{width:20px; height:20px;}
+.ex-name{font-weight:600; font-size:14px;}
+.ex-muscle{font-size:12px; color:var(--text-tertiary);}
+.dots{display:flex; gap:4px; margin-left:auto;}
+.dot{width:7px; height:7px; border-radius:50%; background:var(--border-strong);}
+.dot.done{background:var(--accent);}
+
+.dock{position:fixed; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:4px; background:rgba(18,20,26,.85); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:1px solid var(--border); border-radius:999px; padding:6px; z-index:20; padding-bottom:calc(6px + env(safe-area-inset-bottom));}
+.dock-btn{display:flex; align-items:center; gap:6px; padding:11px 16px; border-radius:999px; color:var(--text-secondary); font-size:13px; font-weight:700;}
+.dock-btn.active{background:var(--accent); color:#0A0B0F; box-shadow:0 0 20px var(--accent-glow);}
+.dock svg{width:18px; height:18px; stroke:currentColor; stroke-width:1.8; fill:none;}
+
+.ob-wrap{padding:24px 20px; height:100%; display:flex; flex-direction:column; position:relative; z-index:1;}
+.ob-opt{display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; margin-bottom:10px;}
+.ob-opt.sel{border-color:var(--accent); background:rgba(0,229,255,.08);}
+.ob-opt-title{font-weight:700; font-size:15px;}
+.ob-opt-sub{font-size:12px; color:var(--text-secondary); margin-top:2px;}
+.ob-check{width:22px; height:22px; border-radius:50%; border:2px solid var(--border-strong); flex-shrink:0;}
+.ob-opt.sel .ob-check{border-color:var(--accent); background:var(--accent); position:relative;}
+.ob-opt.sel .ob-check::after{content:''; position:absolute; left:6px; top:2px; width:5px; height:9px; border:solid #0A0B0F; border-width:0 2px 2px 0; transform:rotate(45deg);}
+.ob-dots{display:flex; gap:6px; justify-content:center; margin:20px 0;}
+.ob-dot{width:8px; height:8px; border-radius:999px; background:var(--border-strong); transition:all .3s;}
+.ob-dot.active{width:24px; background:var(--accent);}
+
+.overlay{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:30; opacity:0; pointer-events:none; transition:opacity .3s;}
+.overlay.show{opacity:1; pointer-events:auto;}
+.sheet{position:fixed; left:0; right:0; bottom:0; max-width:460px; margin:0 auto; max-height:88vh; overflow-y:auto; scrollbar-width:none; background:var(--bg-elevated); border-radius:24px 24px 0 0; padding:24px 20px calc(24px + env(safe-area-inset-bottom)); z-index:31; transform:translateY(100%); transition:transform .4s cubic-bezier(.32,.72,0,1); border-top:1px solid var(--border-strong);}
+.sheet.show{transform:translateY(0);}
+.sheet-handle{width:36px; height:4px; background:var(--border-strong); border-radius:999px; margin:0 auto 18px;}
+.field-row{display:flex; gap:10px; margin:16px 0;}
+.field{flex:1;}
+.field label{font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;}
+.sheet-actions{display:flex; gap:10px; margin-top:8px;}
+.sheet-actions button{flex:1; text-align:center; justify-content:center;}
+.checkmark-wrap{display:flex; flex-direction:column; align-items:center; padding:20px 0;}
+.checkmark-wrap svg{width:60px; height:60px;}
+.checkmark-wrap circle{fill:none; stroke:var(--success); stroke-width:3; stroke-dasharray:157; stroke-dashoffset:157; animation:circ .5s ease forwards;}
+.checkmark-wrap path{fill:none; stroke:var(--success); stroke-width:4; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:30; stroke-dashoffset:30; animation:check .3s ease .4s forwards;}
+@keyframes circ{to{stroke-dashoffset:0;}}
+@keyframes check{to{stroke-dashoffset:0;}}
+
+.pr-row{display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);}
+.pr-row:last-child{border-bottom:none;}
+.pr-medal{font-size:20px; width:28px; text-align:center;}
+
+/* Workout full-screen */
+.workout-screen{position:fixed; inset:0; z-index:40; background:var(--bg); display:flex; flex-direction:column; transform:translateX(100%); transition:transform .35s cubic-bezier(.4,0,.2,1);}
+.workout-screen.show{transform:translateX(0);}
+.workout-top{display:flex; align-items:center; gap:12px; padding:calc(16px + env(safe-area-inset-top)) 16px 12px; border-bottom:1px solid var(--border);}
+.workout-body{flex:1; overflow-y:auto; padding:16px; scrollbar-width:none;}
+.workout-bottom{padding:14px 16px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--border); display:flex; gap:10px;}
+.set-row{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+.set-num{width:28px; text-align:center; font-weight:700; color:var(--text-secondary); font-size:13px; flex-shrink:0;}
+.set-row input{padding:12px;}
+.set-remove{color:var(--text-tertiary); font-size:20px; width:28px; text-align:center; flex-shrink:0;}
+
+/* Heatmap */
+.heatmap-scroll{overflow-x:auto; scrollbar-width:none; margin:6px 0;}
+.heatmap-grid{display:grid; grid-auto-flow:column; grid-template-rows:repeat(7,11px); gap:3px; width:max-content;}
+.hm-cell{width:11px; height:11px; border-radius:3px; background:var(--border);}
+.legend{display:flex; align-items:center; gap:5px; margin-top:10px; font-size:11px; color:var(--text-tertiary);}
+.legend .hm-cell{width:9px; height:9px;}
+#hmTooltip{font-size:13px; color:var(--text); margin-top:8px; min-height:18px;}
+
+.spark{display:block; margin-top:4px;}
+.picker-item{display:flex; align-items:center; gap:10px; padding:12px; border-radius:12px; margin-bottom:6px; background:var(--surface);}
+.freq-row{display:flex; gap:6px; flex-wrap:wrap; margin:10px 0 16px;}
+.freq-btn{width:36px; height:36px; border-radius:10px; background:var(--surface); border:1px solid var(--border); font-weight:700;}
+.freq-btn.sel{background:var(--accent); color:#0A0B0F; border-color:var(--accent);}
+.day-block{border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:10px;}
+
+.prog-cover{height:110px; border-radius:16px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;}
+.prog-cover svg{width:56px; height:56px; opacity:.85;}
+
+/* Program detail */
+.pd-screen{position:fixed; inset:0; z-index:35; background:var(--bg); overflow-y:auto; transform:translateX(100%); transition:transform .35s cubic-bezier(.4,0,.2,1); scrollbar-width:none;}
+.pd-screen.show{transform:translateX(0);}
+.pd-top{padding:calc(16px + env(safe-area-inset-top)) 16px 0;}
+.pd-back{display:inline-flex; align-items:center; gap:6px; color:var(--text-secondary); font-weight:700; font-size:13px; margin-bottom:12px;}
+.pd-cover{height:160px; border-radius:20px; margin-bottom:16px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;}
+.pd-cover svg{width:80px; height:80px;}
+.pd-body{padding:0 16px calc(24px + env(safe-area-inset-bottom));}
+.pd-day{display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--border);}
+.pd-day:last-child{border-bottom:none;}
+.pd-day-exs{padding:6px 0 10px; display:none;}
+.pd-day-exs.open{display:block;}
+.pd-day-ex-row{display:flex; justify-content:space-between; padding:6px 0; font-size:13px; color:var(--text-secondary);}
+
+.shimmer{background:linear-gradient(90deg, var(--surface-hover) 25%, rgba(255,255,255,.1) 37%, var(--surface-hover) 63%); background-size:400% 100%; animation:shimmer 1.4s ease infinite; border-radius:8px; height:14px; margin-bottom:8px;}
+@keyframes shimmer{0%{background-position:100% 0;}100%{background-position:0 0;}}
+.ai-tip{display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px;}
+.ai-tip:last-child{border-bottom:none;}
+</style>
+</head>
+<body>
+<svg style="position:absolute; width:0; height:0;" aria-hidden="true">
+<defs>
+<symbol id="icon-logo" viewBox="0 0 32 32"><path d="M20 5 10 17h6l-2 10 10-13h-6z" fill="url(#gradLogo)"/><linearGradient id="gradLogo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent-secondary)"/></linearGradient></symbol>
+<symbol id="icon-chest" viewBox="0 0 24 24"><path d="M12 6c-2-2-6-2-7 1s1 8 7 11c6-3 8-8 7-11s-5-3-7-1z"/></symbol>
+<symbol id="icon-back" viewBox="0 0 24 24"><path d="M12 3v18M7 8l-3 3 3 3M17 8l3 3-3 3"/></symbol>
+<symbol id="icon-legs" viewBox="0 0 24 24"><path d="M9 3h6l1 9-2 9h-2l-1-8-1 8H8l1-9z"/></symbol>
+<symbol id="icon-shoulders" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M6 10a6 6 0 0 1 12 0M6 14a6 6 0 0 0 12 0"/></symbol>
+<symbol id="icon-arms" viewBox="0 0 24 24"><path d="M5 6l4 4-1 5 6 6 3-3-5-5 1-5-4-4z"/></symbol>
+<symbol id="icon-abs" viewBox="0 0 24 24"><rect x="7" y="4" width="4" height="4" rx="1"/><rect x="13" y="4" width="4" height="4" rx="1"/><rect x="7" y="10" width="4" height="4" rx="1"/><rect x="13" y="10" width="4" height="4" rx="1"/><rect x="7" y="16" width="4" height="4" rx="1"/><rect x="13" y="16" width="4" height="4" rx="1"/></symbol>
+<symbol id="icon-play" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8V4z"/></symbol>
+<symbol id="icon-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6z"/></symbol>
+<symbol id="icon-pencil" viewBox="0 0 24 24"><path d="M4 20l1-4 11-11 3 3-11 11-4 1z"/></symbol>
+<symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+<symbol id="icon-full" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M12 8v6M6 12h12M8 21l4-7 4 7"/></symbol>
+<symbol id="icon-updown" viewBox="0 0 24 24"><path d="M8 4l4-3 4 3M8 20l4 3 4-3M12 1v22"/></symbol>
+<symbol id="icon-ppl" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="18" cy="12" r="2.5"/></symbol>
+</defs>
+</svg>
+
+<div id="app">
+  <div class="orb orb-cyan"></div>
+  <div class="orb orb-orange"></div>
+  <div id="onboarding" class="ob-wrap hidden"></div>
+  <div id="main" class="hidden" style="display:flex; flex-direction:column; height:100%;">
+    <div id="screen-home" class="screen"></div>
+    <div id="screen-stats" class="screen hidden"></div>
+    <div id="screen-programs" class="screen hidden"></div>
+    <div class="dock">
+      <button class="dock-btn" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Главная</button>
+      <button class="dock-btn" data-tab="stats"><svg viewBox="0 0 24 24"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>Статистика</button>
+      <button class="dock-btn" data-tab="programs"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Программы</button>
+    </div>
+  </div>
+  <div id="progDetail" class="pd-screen"></div>
+  <div id="workoutScreen" class="workout-screen"></div>
+</div>
+
+<div id="overlay" class="overlay"></div>
+<div id="sheet" class="sheet"></div>
+
+<script>
+/* ---------- TELEGRAM SDK ---------- */
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if(tg){ tg.ready(); tg.expand(); }
+function haptic(type){ if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred(type); }
+function firstName(){ return (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || 'Атлет'; }
+function icon(name, cls){ return `<svg class="${cls||'icon'}"><use href="#icon-${name}"/></svg>`; }
+
+/* ---------- AI BACKEND (ключ никогда не хранится тут!) ---------- */
+const AI_ENDPOINT = 'https://your-backend.onrender.com/api/ai-insights';
+
+/* ---------- DATA ---------- */
+// Каждому упражнению соответствует iconKey группы мышц (см. requirement_2)
+const EXERCISES = {
+  'Жим штанги лёжа':{muscle:'Грудь',icon:'chest'}, 'Жим гантелей на наклонной':{muscle:'Грудь',icon:'chest'},
+  'Разводка':{muscle:'Грудь',icon:'chest'}, 'Отжимания на брусьях':{muscle:'Грудь',icon:'chest'},
+  'Становая':{muscle:'Спина',icon:'back'}, 'Подтягивания':{muscle:'Спина',icon:'back'},
+  'Тяга штанги в наклоне':{muscle:'Спина',icon:'back'}, 'Тяга верхнего блока':{muscle:'Спина',icon:'back'},
+  'Приседания':{muscle:'Ноги',icon:'legs'}, 'Жим ногами':{muscle:'Ноги',icon:'legs'},
+  'Выпады':{muscle:'Ноги',icon:'legs'}, 'Румынская тяга':{muscle:'Ноги',icon:'legs'},
+  'Жим стоя':{muscle:'Плечи',icon:'shoulders'}, 'Махи в стороны':{muscle:'Плечи',icon:'shoulders'}, 'Тяга к подбородку':{muscle:'Плечи',icon:'shoulders'},
+  'Бицепс':{muscle:'Руки',icon:'arms'}, 'Французский жим':{muscle:'Руки',icon:'arms'}, 'Молотки':{muscle:'Руки',icon:'arms'},
+  'Планка':{muscle:'Пресс',icon:'abs'}, 'Скручивания':{muscle:'Пресс',icon:'abs'}, 'Подъём ног':{muscle:'Пресс',icon:'abs'}
+};
+
+const PROGRAMS = {
+  fullbody:{ name:'Фулбоди 3 дня', icon:'full', level:'Новичок', freq:'3 дня в неделю', duration:'45-60 минут',
+    desc:['Классическая схема для тех, кто только начинает путь в зале. Каждая тренировка прорабатывает всё тело целиком — от груди и спины до ног и пресса.',
+      'Подходит для набора мышечной массы и обучения технике базовых движений: приседаний, жима и тяги. Три тренировки в неделю оставляют достаточно времени на восстановление.',
+      'Плюсы: минимальный объём, быстрое восстановление между сессиями, сильный фокус на базовых многосуставных упражнениях, которые дают максимум результата новичку.'],
+    days:[
+      {label:'День A', ex:['Приседания','Жим штанги лёжа','Тяга штанги в наклоне','Жим стоя','Скручивания']},
+      {label:'День B', ex:['Становая','Жим гантелей на наклонной','Подтягивания','Выпады','Планка']},
+      {label:'День C', ex:['Жим ногами','Разводка','Тяга верхнего блока','Бицепс','Подъём ног']}
+    ]},
+  updown:{ name:'Верх/Низ 4 дня', icon:'updown', level:'Средний', freq:'4 дня в неделю', duration:'50-70 минут',
+    desc:['Сплит на верх и низ тела — оптимальный баланс между объёмом нагрузки и временем на восстановление.',
+      'Две тренировки в неделю приходятся на верх тела (грудь, спина, плечи, руки), ещё две — на низ (ноги, ягодицы). Каждая группа мышц получает нагрузку дважды в неделю.',
+      'Подходит тем, кто уже освоил технику базовых упражнений и готов к большему тренировочному объёму ради роста силы и массы.'],
+    days:[
+      {label:'Верх A', ex:['Жим штанги лёжа','Тяга штанги в наклоне','Жим стоя','Бицепс','Французский жим']},
+      {label:'Низ A', ex:['Приседания','Румынская тяга','Выпады','Скручивания']},
+      {label:'Верх B', ex:['Жим гантелей на наклонной','Подтягивания','Махи в стороны','Молотки']},
+      {label:'Низ B', ex:['Становая','Жим ногами','Подъём ног','Планка']}
+    ]},
+  ppl:{ name:'Push-Pull-Legs 6 дней', icon:'ppl', level:'Продвинутый', freq:'6 дней в неделю', duration:'60-75 минут',
+    desc:['Продвинутый сплит для максимального тренировочного объёма: жим (Push), тяга (Pull) и ноги (Legs) чередуются шесть дней подряд.',
+      'Каждая группа мышц прорабатывается дважды за неделю с высокой детализацией — отдельно грудь/плечи/трицепс, отдельно спина/бицепс, отдельно ноги.',
+      'Требует хорошего восстановления, режима сна и питания. Не рекомендуется новичкам — рассчитан на опытных атлетов, готовых к большому объёму работы.'],
+    days:[
+      {label:'Push A', ex:['Жим штанги лёжа','Жим стоя','Разводка','Французский жим']},
+      {label:'Pull A', ex:['Становая','Подтягивания','Тяга штанги в наклоне','Бицепс']},
+      {label:'Legs A', ex:['Приседания','Румынская тяга','Выпады']},
+      {label:'Push B', ex:['Жим гантелей на наклонной','Отжимания на брусьях','Махи в стороны']},
+      {label:'Pull B', ex:['Тяга верхнего блока','Тяга к подбородку','Молотки']},
+      {label:'Legs B', ex:['Жим ногами','Румынская тяга','Подъём ног','Планка']}
+    ]}
+};
+
+const GOALS = [{id:'gain',t:'Набор массы',s:'Больше объёма и силы'},{id:'lose',t:'Похудение',s:'Жиросжигание, рельеф'},{id:'keep',t:'Поддержание формы',s:'Тонус и здоровье'}];
+const LEVELS = [{id:'beginner',t:'Новичок',s:'0-6 месяцев тренировок'},{id:'medium',t:'Средний',s:'6 мес - 2 года'},{id:'advanced',t:'Продвинутый',s:'2+ года опыта'}];
+const PROG_OPTS = [{id:'fullbody',t:'Фулбоди 3 дня',s:'Всё тело за тренировку'},{id:'updown',t:'Верх-Низ 4 дня',s:'Разделение по группам'},{id:'ppl',t:'Push-Pull-Legs 6 дней',s:'Максимальный объём'}];
+
+/* ---------- STATE ---------- */
+let state = loadState();
+function loadState(){
+  try{ const s = JSON.parse(localStorage.getItem('gymflow_state')); if(s){ migrate(s); return s; } }catch(e){}
+  return { user:{goal:null,level:null,program:null,name:firstName(),customPrograms:[]}, workouts:[], currentDayIndex:0, points:0, onboardingDone:false };
+}
+// Миграция старых данных (плоские sets -> exercises со списком подходов)
+function migrate(s){
+  if(!s.user.customPrograms) s.user.customPrograms = [];
+  s.workouts = (s.workouts||[]).map(w=>{
+    if(w.exercises) return w;
+    const byEx = {};
+    (w.sets||[]).forEach(set=>{ (byEx[set.exercise] = byEx[set.exercise]||[]).push({weight:set.weight, reps:set.reps}); });
+    return { name:w.name, date:w.date, duration:w.duration, exercises:Object.entries(byEx).map(([name,sets])=>({name,sets})) };
+  });
+}
+function saveState(){ localStorage.setItem('gymflow_state', JSON.stringify(state)); }
+function allPrograms(){
+  const custom = {}; state.user.customPrograms.forEach(p=>{ custom[p.id] = p; });
+  return Object.assign({}, PROGRAMS, custom);
+}
+
+/* ---------- ONBOARDING ---------- */
+let obStep = 0; let obChoice = {goal:null, level:null, program:null};
+function renderOnboarding(){
+  const wrap = document.getElementById('onboarding');
+  const steps = [
+    {title:'Какая у тебя цель?', sub:'Подберём программу под тебя', opts:GOALS, key:'goal'},
+    {title:'Твой уровень?', sub:'Чтобы точно рассчитать нагрузку', opts:LEVELS, key:'level'},
+    {title:'Выбери программу', sub:'Всегда можно сменить позже', opts:PROG_OPTS, key:'program'}
+  ];
+  const s = steps[obStep];
+  wrap.innerHTML = `
+    ${obStep===0?`<div class="logo-mark" style="margin-bottom:16px;">${icon('logo','')}</div>`:''}
+    <div class="h1">${s.title}</div>
+    <div class="sub" style="margin-bottom:24px;">${s.sub}</div>
+    <div>${s.opts.map(o=>`
+      <div class="ob-opt tappable" data-id="${o.id}">
+        <div><div class="ob-opt-title">${o.t}</div><div class="ob-opt-sub">${o.s}</div></div>
+        <div class="ob-check"></div>
+      </div>`).join('')}
+    </div>
+    <div style="flex:1;"></div>
+    <div class="ob-dots">${steps.map((_,i)=>`<div class="ob-dot ${i===obStep?'active':''}"></div>`).join('')}</div>
+    <button class="btn-primary" id="obNext" style="width:100%; justify-content:center; opacity:.4; pointer-events:none;">${obStep===2?'Начать!':'Далее'}</button>
+  `;
+  wrap.querySelectorAll('.ob-opt').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      haptic('light');
+      wrap.querySelectorAll('.ob-opt').forEach(x=>x.classList.remove('sel'));
+      el.classList.add('sel');
+      obChoice[s.key] = el.dataset.id;
+      const btn = document.getElementById('obNext');
+      btn.style.opacity = 1; btn.style.pointerEvents = 'auto';
+    });
+  });
+  document.getElementById('obNext').addEventListener('click', ()=>{
+    haptic('medium');
+    if(obStep < 2){ obStep++; renderOnboarding(); }
+    else{
+      state.user.goal = obChoice.goal; state.user.level = obChoice.level; state.user.program = obChoice.program;
+      state.user.name = firstName(); state.user.customPrograms = state.user.customPrograms || []; state.onboardingDone = true;
+      saveState(); boot();
+    }
+  });
+}
+
+/* ---------- HOME HELPERS ---------- */
+function currentProgram(){ return allPrograms()[state.user.program] || PROGRAMS.fullbody; }
+function todayDay(){ const prog = currentProgram(); return prog.days[state.currentDayIndex % prog.days.length]; }
+function weekCompleted(){ const wk=7*24*3600*1000, now=Date.now(); return state.workouts.filter(w=>now-new Date(w.date).getTime()<wk).length; }
+function streak(){
+  if(!state.workouts.length) return 0;
+  let s=0; const day=24*3600*1000; let cursor=new Date().setHours(0,0,0,0);
+  const dates = new Set(state.workouts.map(w=>new Date(w.date).setHours(0,0,0,0)));
+  while(dates.has(cursor)){ s++; cursor -= day; }
+  return s;
+}
+function totalVolume(){ let v=0; state.workouts.forEach(w=>w.exercises.forEach(e=>e.sets.forEach(s=>v+=s.weight*s.reps))); return Math.round(v); }
+function totalSets(){ let c=0; state.workouts.forEach(w=>w.exercises.forEach(e=>c+=e.sets.length)); return c; }
+function personalRecords(){
+  const best={}; state.workouts.forEach(w=>w.exercises.forEach(e=>e.sets.forEach(s=>{ if(!best[e.name]||s.weight>best[e.name]) best[e.name]=s.weight; })));
+  return Object.entries(best).sort((a,b)=>b[1]-a[1]).slice(0,5);
+}
+function exerciseProgress(){
+  const agg={};
+  state.workouts.forEach(w=>w.exercises.forEach(e=>{
+    if(!agg[e.name]) agg[e.name]={max:0,sets:0,sessions:[]};
+    const maxInSession = Math.max(...e.sets.map(s=>s.weight));
+    agg[e.name].sets += e.sets.length; if(maxInSession>agg[e.name].max) agg[e.name].max=maxInSession;
+    agg[e.name].sessions.push({date:w.date, max:maxInSession});
+  }));
+  return Object.entries(agg);
+}
+function sparkline(sessions){
+  const last = sessions.slice(-5); if(last.length<2) return '';
+  const max=Math.max(...last.map(s=>s.max)), min=Math.min(...last.map(s=>s.max));
+  const pts = last.map((s,i)=>{ const x=i/(last.length-1)*60; const y = max===min?10:20-((s.max-min)/(max-min))*18; return `${x},${y}`; }).join(' ');
+  return `<svg class="spark" width="60" height="20" viewBox="0 0 60 20"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  const el = document.getElementById('screen-home');
+  const day = todayDay(); const target = currentProgram().days.length;
+  const done = Math.min(weekCompleted(), target);
+  const r=32, c=2*Math.PI*r, off=c-(done/target)*c;
+  el.innerHTML = `
+    <div class="header">
+      <div class="logo-mark">${icon('logo','')}</div>
+      <div><div class="h1">Привет, ${state.user.name}!</div><div class="sub">${new Date().toLocaleDateString('ru-RU',{weekday:'long', day:'numeric', month:'long'})}</div></div>
+      <div class="avatar">${state.user.name[0].toUpperCase()}</div>
+    </div>
+    <div class="card hero" style="animation-delay:.05s;">
+      <div class="label">Сегодня</div>
+      <div class="hero-title">${day.label}</div>
+      <div class="sub" style="margin-bottom:16px;">${day.ex.length} упражнений</div>
+      <button class="btn-primary" id="startWorkout">${icon('play')}Начать</button>
+    </div>
+    <div class="card" style="animation-delay:.1s;">
+      <div class="h2">Прогресс недели</div>
+      <div class="ring-row">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="${r}" stroke="var(--border)" stroke-width="5" fill="none"/>
+          <circle cx="40" cy="40" r="${r}" stroke="url(#gr)" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 40 40)" style="transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1)"/>
+          <defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--accent)"/><stop offset="100%" stop-color="#00B8D4"/></linearGradient></defs>
+        </svg>
+        <div><div class="stat-num">${done} из ${target}</div><div class="sub">тренировок</div></div>
+      </div>
+    </div>
+    <div class="grid2" style="margin-bottom:12px;">
+      <div class="card stat-card" style="animation-delay:.15s;"><div class="stat-icon">${icon('sparkle')}</div><div class="stat-num">${state.workouts.length}</div><div class="sub">Тренировок</div></div>
+      <div class="card stat-card" style="animation-delay:.2s;"><div class="stat-icon">${icon('full')}</div><div class="stat-num">${streak()}</div><div class="sub">Серия 🔥</div></div>
+    </div>
+    <div class="card" style="animation-delay:.25s;">
+      <div class="h2">Упражнения сегодня</div>
+      ${day.ex.map(name=>{ const e=EXERCISES[name]; return `<div class="ex-row"><div class="ex-icon">${icon(e.icon)}</div>
+        <div><div class="ex-name">${name}</div><div class="ex-muscle">${e.muscle}</div></div>
+        <div class="dots">${[0,1,2].map(()=>'<div class="dot"></div>').join('')}</div></div>`; }).join('')}
+    </div>
+  `;
+  document.getElementById('startWorkout').addEventListener('click', startWorkoutFlow);
+}
+
+/* ---------- WORKOUT FLOW (подходы = {weight, reps}) ---------- */
+let session = null; // {day, exIndex, exercises:[{name, sets:[]}]}
+function startWorkoutFlow(){
+  haptic('medium');
+  const day = todayDay();
+  session = { day, exIndex:0, exercises: day.ex.map(name=>({name, sets:[]})) };
+  document.getElementById('workoutScreen').classList.add('show');
+  renderWorkoutStep();
+}
+function renderWorkoutStep(){
+  const scr = document.getElementById('workoutScreen');
+  if(session.exIndex >= session.exercises.length){ finishWorkout(); return; }
+  const cur = session.exercises[session.exIndex];
+  const e = EXERCISES[cur.name] || {icon:'chest', muscle:''};
+  scr.innerHTML = `
+    <div class="workout-top">
+      <button id="wCancel" style="color:var(--text-secondary); font-weight:700; font-size:13px;">Отмена</button>
+      <div style="flex:1; text-align:center;"><div class="label">${session.exIndex+1}/${session.exercises.length}</div></div>
+      <div style="width:50px;"></div>
+    </div>
+    <div class="workout-body">
+      <div class="ex-icon" style="width:56px; height:56px; border-radius:16px; margin-bottom:12px;">${icon(e.icon,'icon')}</div>
+      <div class="h1" style="margin-bottom:2px;">${cur.name}</div>
+      <div class="sub" style="margin-bottom:20px;">${e.muscle}</div>
+      <div id="setsList"></div>
+      <button class="btn-secondary" id="addSet" style="width:100%; margin-top:6px;">+ Добавить подход</button>
+    </div>
+    <div class="workout-bottom">
+      <button class="btn-primary" id="doneEx" style="width:100%; justify-content:center;">Упражнение выполнено</button>
+    </div>
+  `;
+  function renderSets(){
+    const list = document.getElementById('setsList');
+    list.innerHTML = cur.sets.map((s,i)=>`
+      <div class="set-row">
+        <div class="set-num">${i+1}</div>
+        <input type="number" inputmode="decimal" placeholder="кг" value="${s.weight||''}" data-i="${i}" data-f="weight">
+        <input type="number" inputmode="numeric" placeholder="повт." value="${s.reps||''}" data-i="${i}" data-f="reps">
+        <div class="set-remove tappable" data-rm="${i}">×</div>
+      </div>`).join('') || `<div class="sub" style="margin-bottom:10px;">Пока нет подходов — добавь первый</div>`;
+    list.querySelectorAll('input').forEach(inp=>{
+      inp.addEventListener('input', ()=>{ cur.sets[inp.dataset.i][inp.dataset.f] = parseFloat(inp.value)||0; });
+    });
+    list.querySelectorAll('[data-rm]').forEach(b=>{
+      b.addEventListener('click', ()=>{ haptic('light'); cur.sets.splice(parseInt(b.dataset.rm),1); renderSets(); });
+    });
+  }
+  renderSets();
+  document.getElementById('addSet').addEventListener('click', ()=>{
+    haptic('light');
+    const last = cur.sets[cur.sets.length-1];
+    cur.sets.push({ weight: last?last.weight:0, reps: last?last.reps:0 });
+    renderSets();
+  });
+  document.getElementById('doneEx').addEventListener('click', ()=>{
+    cur.sets = cur.sets.filter(s=>s.weight>0 && s.reps>0);
+    haptic('medium');
+    session.exIndex++;
+    renderWorkoutStep();
+  });
+  document.getElementById('wCancel').addEventListener('click', ()=>{
+    haptic('light'); document.getElementById('workoutScreen').classList.remove('show'); session=null;
+  });
+}
+function finishWorkout(){
+  const totalSetsCount = session.exercises.reduce((a,e)=>a+e.sets.length,0);
+  state.workouts.push({ name: session.day.label, date:new Date().toISOString(), duration: totalSetsCount*3, exercises: session.exercises.filter(e=>e.sets.length) });
+  state.currentDayIndex++; state.points += totalSetsCount*10;
+  saveState();
+  document.getElementById('workoutScreen').classList.remove('show');
+  session = null;
+  haptic('medium');
+  if(tg && tg.showPopup){ tg.showPopup({title:'Готово!', message:'Тренировка завершена! 🎉', buttons:[{type:'ok'}]}); }
+  else { alert('Тренировка завершена! 🎉'); }
+  renderHome();
+}
+
+/* ---------- HEATMAP ---------- */
+function dailyAgg(){
+  const map = {};
+  state.workouts.forEach(w=>{
+    const key = new Date(w.date).toDateString();
+    if(!map[key]) map[key] = {exCount:0, volume:0};
+    map[key].exCount += w.exercises.length;
+    w.exercises.forEach(e=>e.sets.forEach(s=>map[key].volume += s.weight*s.reps));
+  });
+  return map;
+}
+function heatColor(exCount){
+  if(!exCount) return 'var(--border)';
+  if(exCount<=2) return 'rgba(0,229,255,0.2)';
+  if(exCount<=4) return 'rgba(0,229,255,0.5)';
+  return 'var(--accent)';
+}
+function renderHeatmap(){
+  const agg = dailyAgg();
+  const days = 168; // 24 недели
+  const today = new Date(); today.setHours(0,0,0,0);
+  const cells = [];
+  for(let i=days-1;i>=0;i--){
+    const d = new Date(today.getTime() - i*86400000);
+    const key = d.toDateString();
+    const data = agg[key] || {exCount:0, volume:0};
+    cells.push(`<div class="hm-cell tappable" style="background:${heatColor(data.exCount)}" data-date="${d.toLocaleDateString('ru-RU',{day:'numeric', month:'long'})}" data-count="${data.exCount}" data-vol="${Math.round(data.volume)}"></div>`);
+  }
+  return `<div class="heatmap-scroll"><div class="heatmap-grid">${cells.join('')}</div></div>
+    <div id="hmTooltip" class="sub">Нажми на день, чтобы увидеть детали</div>
+    <div class="legend">меньше
+      <div class="hm-cell" style="background:var(--border)"></div>
+      <div class="hm-cell" style="background:rgba(0,229,255,0.2)"></div>
+      <div class="hm-cell" style="background:rgba(0,229,255,0.5)"></div>
+      <div class="hm-cell" style="background:var(--accent)"></div>
+    больше</div>`;
+}
+
+/* ---------- AI INSIGHTS ---------- */
+async function getAIInsights(){
+  const box = document.getElementById('aiResult');
+  box.innerHTML = `<div class="shimmer" style="width:95%;"></div><div class="shimmer" style="width:85%;"></div><div class="shimmer" style="width:70%;"></div>`;
+  try{
+    const payload = { workouts: state.workouts.slice(-20), user: state.user, streak: streak(), volume: totalVolume() };
+    const res = await fetch(AI_ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    const tips = data.tips || [];
+    box.innerHTML = tips.length ? tips.map(t=>`<div class="ai-tip">${icon('sparkle')}<div>${t}</div></div>`).join('') : `<div class="sub">Недостаточно данных для рекомендаций.</div>`;
+  }catch(e){
+    box.innerHTML = `<div class="sub" style="color:var(--danger);">Не удалось получить рекомендации. Проверь соединение.</div>`;
+  }
+}
+
+/* ---------- STATS ---------- */
+function renderStats(){
+  const el = document.getElementById('screen-stats');
+  const prog = exerciseProgress();
+  const pr = personalRecords();
+  const medals = ['🥇','🥈','🥉','🏅','🏅'];
+  el.innerHTML = `
+    <div class="header"><div class="h1">Статистика</div></div>
+    <div class="grid3" style="margin-bottom:12px;">
+      <div class="card stat-card" style="animation-delay:.05s; padding:14px;"><div class="stat-num">${state.workouts.length}</div><div class="sub">Всего</div></div>
+      <div class="card stat-card" style="animation-delay:.08s; padding:14px;"><div class="stat-num">${totalVolume()}</div><div class="sub">Объём, кг</div></div>
+      <div class="card stat-card" style="animation-delay:.11s; padding:14px;"><div class="stat-num">${streak()}</div><div class="sub">Серия 🔥</div></div>
+    </div>
+    <div class="card" style="animation-delay:.15s;">
+      <div class="h2">Активность</div>
+      ${renderHeatmap()}
+    </div>
+    <div class="card" style="animation-delay:.2s;">
+      <div class="h2">Прогресс по упражнениям</div>
+      ${prog.length ? prog.map(([name,d])=>`
+        <div class="ex-row"><div class="ex-icon">${icon((EXERCISES[name]||{icon:'chest'}).icon)}</div>
+        <div><div class="ex-name">${name}</div><div class="ex-muscle">${d.sets} подходов</div></div>
+        <div style="margin-left:auto; text-align:right;"><div class="stat-num" style="font-size:16px;">${d.max} кг</div>${sparkline(d.sessions)}</div></div>`).join('') : `<div class="sub">Пока нет данных — начни тренировку!</div>`}
+    </div>
+    <div class="card" style="animation-delay:.25s;">
+      <div class="h2">Личные рекорды</div>
+      ${pr.length ? pr.map(([name,w],i)=>`
+        <div class="pr-row"><div class="pr-medal">${medals[i]}</div>
+        <div style="flex:1;"><div class="ex-name">${name}</div></div>
+        <div class="stat-num" style="font-size:16px;">${w} кг</div></div>`).join('') : `<div class="sub">Рекордов пока нет</div>`}
+    </div>
+    <div class="card" style="animation-delay:.3s;">
+      <div class="h2">AI-инсайты</div>
+      <button class="btn-primary" id="aiBtn" style="margin-bottom:14px;">${icon('sparkle')}Получить рекомендации</button>
+      <div id="aiResult"></div>
+    </div>
+  `;
+  el.querySelectorAll('.hm-cell[data-date]').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      document.getElementById('hmTooltip').textContent = `${c.dataset.date} — ${c.dataset.count} упражнений, ${c.dataset.vol} кг`;
+    });
+  });
+  document.getElementById('aiBtn').addEventListener('click', ()=>{ haptic('light'); getAIInsights(); });
+}
+
+/* ---------- PROGRAMS LIST ---------- */
+function renderPrograms(){
+  const el = document.getElementById('screen-programs');
+  const progs = allPrograms();
+  el.innerHTML = `
+    <div class="header"><div class="h1">Программы</div></div>
+    ${Object.entries(progs).map(([id,p],i)=>{
+      const active = state.user.program === id;
+      const isCustom = !!p.isCustom;
+      return `<div class="card tappable" data-prog="${id}" style="animation-delay:${.05+i*.05}s; ${active?'border-color:var(--accent); background:rgba(0,229,255,.06);':''}">
+        <div class="prog-cover" style="background:linear-gradient(135deg, rgba(0,229,255,.18), rgba(255,107,53,.1));">${icon(p.icon||'full','')}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="h2" style="margin:0;">${p.name}</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${active?'<span style="color:var(--accent); font-weight:700;">✅</span>':''}
+            ${isCustom?`<span class="tappable" data-edit="${id}" style="color:var(--text-secondary);">${icon('pencil')}</span><span class="tappable" data-del="${id}" style="color:var(--danger);">${icon('trash')}</span>`:''}
+          </div>
+        </div>
+        <div class="sub">${p.days.map(d=>d.label).join(' · ')}</div>
+      </div>`;
+    }).join('')}
+    <button class="btn-secondary" id="createProgBtn" style="width:100%; margin-top:8px;">+ Создать свою программу</button>
+  `;
+  el.querySelectorAll('[data-prog]').forEach(c=>{
+    c.addEventListener('click', (ev)=>{
+      if(ev.target.closest('[data-edit]') || ev.target.closest('[data-del]')) return;
+      haptic('light'); openProgramDetail(c.dataset.prog);
+    });
+  });
+  el.querySelectorAll('[data-edit]').forEach(b=>{ b.addEventListener('click', (ev)=>{ ev.stopPropagation(); haptic('light'); openProgramBuilder(b.dataset.edit); }); });
+  el.querySelectorAll('[data-del]').forEach(b=>{ b.addEventListener('click', (ev)=>{
+    ev.stopPropagation(); haptic('medium');
+    state.user.customPrograms = state.user.customPrograms.filter(p=>p.id!==b.dataset.del);
+    if(state.user.program===b.dataset.del) state.user.program='fullbody';
+    saveState(); renderPrograms();
+  }); });
+  document.getElementById('createProgBtn').addEventListener('click', ()=>{ haptic('light'); openProgramBuilder(null); });
+}
+
+/* ---------- PROGRAM DETAIL SCREEN ---------- */
+function openProgramDetail(id){
+  const p = allPrograms()[id];
+  const scr = document.getElementById('progDetail');
+  const active = state.user.program === id;
+  scr.innerHTML = `
+    <div class="pd-top">
+      <div class="pd-back tappable" id="pdBack">← Назад</div>
+      <div class="pd-cover" style="background:linear-gradient(135deg, rgba(0,229,255,.2), rgba(255,107,53,.12));">${icon(p.icon||'full','')}</div>
+    </div>
+    <div class="pd-body">
+      <div class="h1" style="margin-bottom:4px;">${p.name}</div>
+      <div class="sub" style="margin-bottom:16px;">${p.freq||(p.days.length+' дней в неделю')} · ${p.duration||'45-60 минут'} · ${p.level||'Любой уровень'}</div>
+      ${(p.desc||[p.description||'']).map(par=>`<p class="sub" style="color:var(--text); line-height:1.6; margin-bottom:10px;">${par}</p>`).join('')}
+      <div class="card" style="margin-top:16px;">
+        <div class="h2">Тренировки</div>
+        ${p.days.map((d,i)=>`
+          <div class="pd-day tappable" data-day="${i}">
+            <div><div class="ex-name">${d.label}</div><div class="ex-muscle">${d.ex.length} упражнений</div></div>
+            <div style="color:var(--text-tertiary);">▾</div>
+          </div>
+          <div class="pd-day-exs" id="pdEx${i}">
+            ${d.ex.map(name=>`<div class="pd-day-ex-row"><span>${name}</span><span>3×10</span></div>`).join('')}
+          </div>`).join('')}
+      </div>
+      <button class="btn-primary" id="activateBtn" style="width:100%; justify-content:center; margin-top:16px;" ${active?'disabled':''}>${active?'Текущая программа':'Активировать программу'}</button>
+    </div>
+  `;
+  scr.classList.add('show');
+  document.getElementById('pdBack').addEventListener('click', ()=>{ haptic('light'); scr.classList.remove('show'); });
+  scr.querySelectorAll('[data-day]').forEach(row=>{
+    row.addEventListener('click', ()=>{ haptic('light'); document.getElementById('pdEx'+row.dataset.day).classList.toggle('open'); });
+  });
+  if(!active){
+    document.getElementById('activateBtn').addEventListener('click', ()=>{
+      haptic('medium'); state.user.program = id; state.currentDayIndex = 0; saveState();
+      scr.classList.remove('show'); renderPrograms(); renderHome();
+    });
+  }
+}
+
+/* ---------- CUSTOM PROGRAM BUILDER ---------- */
+let builder = null;
+function openProgramBuilder(editId){
+  const existing = editId ? state.user.customPrograms.find(p=>p.id===editId) : null;
+  builder = existing ? JSON.parse(JSON.stringify(existing)) : { id:'custom_'+Date.now(), name:'', description:'', isCustom:true, icon:'full', days:[{label:'День 1', ex:[]}] };
+  renderBuilder();
+}
+function renderBuilder(){
+  const overlay = document.getElementById('overlay'); const sheet = document.getElementById('sheet');
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="h1" style="margin-bottom:16px;">${builder.id.startsWith('custom_')&&!state.user.customPrograms.find(p=>p.id===builder.id)?'Новая программа':'Редактирование'}</div>
+    <div class="field" style="margin-bottom:12px;"><label>Название программы</label><input id="bName" value="${builder.name}" placeholder="Моя программа"></div>
+    <div class="field" style="margin-bottom:12px;"><label>Описание</label><textarea id="bDesc" rows="2" placeholder="Кратко о программе">${builder.description}</textarea></div>
+    <label style="font-size:12px; color:var(--text-secondary);">Тренировок в неделю</label>
+    <div class="freq-row" id="bFreq">${[1,2,3,4,5,6,7].map(n=>`<div class="freq-btn tappable ${builder.days.length===n?'sel':''}" data-n="${n}">${n}</div>`).join('')}</div>
+    <div id="bDays"></div>
+    <div class="sheet-actions">
+      <button class="btn-secondary" id="bCancel">Отмена</button>
+      <button class="btn-primary" id="bSave">Сохранить</button>
+    </div>
+  `;
+  overlay.classList.add('show'); sheet.classList.add('show');
+  renderBuilderDays();
+  document.getElementById('bName').addEventListener('input', e=>builder.name=e.target.value);
+  document.getElementById('bDesc').addEventListener('input', e=>builder.description=e.target.value);
+  document.getElementById('bFreq').querySelectorAll('.freq-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      haptic('light'); const n = parseInt(btn.dataset.n);
+      while(builder.days.length<n) builder.days.push({label:'День '+(builder.days.length+1), ex:[]});
+      builder.days = builder.days.slice(0,n);
+      renderBuilder();
+    });
+  });
+  document.getElementById('bCancel').addEventListener('click', ()=>{ haptic('light'); closeSheet(); builder=null; });
+  document.getElementById('bSave').addEventListener('click', ()=>{
+    if(!builder.name.trim()){ haptic('light'); return; }
+    haptic('medium');
+    const idx = state.user.customPrograms.findIndex(p=>p.id===builder.id);
+    if(idx>=0) state.user.customPrograms[idx] = builder; else state.user.customPrograms.push(builder);
+    saveState(); closeSheet(); builder=null; renderPrograms();
+  });
+}
+function renderBuilderDays(){
+  const box = document.getElementById('bDays');
+  box.innerHTML = builder.days.map((d,i)=>`
+    <div class="day-block">
+      <input value="${d.label}" data-dayname="${i}" style="margin-bottom:10px; font-weight:700;">
+      <div id="dEx${i}">${d.ex.map((name,j)=>`<div class="picker-item"><div class="ex-icon" style="width:32px; height:32px;">${icon((EXERCISES[name]||{icon:'chest'}).icon)}</div><div style="flex:1; font-size:13px;">${name}</div><div class="tappable" data-rmex="${i}:${j}" style="color:var(--text-tertiary); font-size:18px;">×</div></div>`).join('')}</div>
+      <button class="btn-ghost tappable" data-addex="${i}">+ Добавить упражнение</button>
+    </div>`).join('');
+  box.querySelectorAll('[data-dayname]').forEach(inp=>{ inp.addEventListener('input', e=>{ builder.days[inp.dataset.dayname].label = e.target.value; }); });
+  box.querySelectorAll('[data-addex]').forEach(b=>{ b.addEventListener('click', ()=>{ haptic('light'); openExercisePicker(parseInt(b.dataset.addex)); }); });
+  box.querySelectorAll('[data-rmex]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      haptic('light'); const [i,j] = b.dataset.rmex.split(':').map(Number);
+      builder.days[i].ex.splice(j,1); renderBuilderDays();
+    });
+  });
+}
+function openExercisePicker(dayIndex){
+  const overlay = document.getElementById('overlay'); const sheet = document.getElementById('sheet');
+  function list(filter){
+    return Object.entries(EXERCISES).filter(([name,e])=> !filter || name.toLowerCase().includes(filter.toLowerCase()) || e.muscle.toLowerCase().includes(filter.toLowerCase()))
+      .map(([name,e])=>`<div class="picker-item tappable" data-pick="${name}"><div class="ex-icon" style="width:32px; height:32px;">${icon(e.icon)}</div><div style="flex:1;"><div class="ex-name">${name}</div><div class="ex-muscle">${e.muscle}</div></div></div>`).join('');
+  }
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="h2">Выбери упражнение</div>
+    <input id="pSearch" placeholder="Поиск по названию или группе мышц" style="margin-bottom:12px;">
+    <div id="pList" style="max-height:50vh; overflow-y:auto;">${list('')}</div>
+    <button class="btn-secondary" id="pBack" style="width:100%; margin-top:12px;">Назад</button>
+  `;
+  overlay.classList.add('show'); sheet.classList.add('show');
+  document.getElementById('pSearch').addEventListener('input', e=>{ document.getElementById('pList').innerHTML = list(e.target.value); bindPick(); });
+  function bindPick(){
+    document.querySelectorAll('[data-pick]').forEach(el=>{
+      el.addEventListener('click', ()=>{ haptic('light'); builder.days[dayIndex].ex.push(el.dataset.pick); renderBuilder(); });
+    });
+  }
+  bindPick();
+  document.getElementById('pBack').addEventListener('click', ()=>{ haptic('light'); renderBuilder(); });
+}
+function closeSheet(){ document.getElementById('overlay').classList.remove('show'); document.getElementById('sheet').classList.remove('show'); }
+
+/* ---------- NAV ---------- */
+function switchTab(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.querySelectorAll('.dock-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.remove('hidden');
+  document.querySelector(`.dock-btn[data-tab="${tab}"]`).classList.add('active');
+  if(tab==='home'){ renderHome(); if(tg && tg.BackButton) tg.BackButton.hide(); }
+  if(tab==='stats'){ renderStats(); if(tg && tg.BackButton) tg.BackButton.show(); }
+  if(tab==='programs'){ renderPrograms(); if(tg && tg.BackButton) tg.BackButton.show(); }
+}
+document.querySelectorAll('.dock-btn').forEach(b=>{ b.addEventListener('click', ()=>{ haptic('light'); switchTab(b.dataset.tab); }); });
+if(tg && tg.BackButton){ tg.BackButton.onClick(()=>{ haptic('light'); switchTab('home'); }); }
+
+/* ---------- BOOT ---------- */
+function boot(){
+  if(!state.onboardingDone){
+    document.getElementById('onboarding').classList.remove('hidden');
+    document.getElementById('main').classList.add('hidden');
+    obStep = 0; obChoice = {goal:null,level:null,program:null};
+    renderOnboarding();
+  } else {
+    document.getElementById('onboarding').classList.add('hidden');
+    document.getElementById('main').classList.remove('hidden');
+    switchTab('home');
+  }
+}
+boot();
+</script>
+</body>
+</html>
